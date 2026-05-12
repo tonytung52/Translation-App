@@ -1,0 +1,135 @@
+# Translation-App
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="閩南語翻譯">
+    <title>同步翻譯 - 閩南語 ⇄ 中文</title>
+    <style>
+        :root {
+            --bg-color: #0d0f17;
+            --card-bg: #1a1d2e;
+            --accent-red: #d94352;
+            --accent-blue: #2d3b5e;
+            --text-main: #ffffff;
+            --text-secondary: #a0a0b0;
+            --border-color: #3d4b6e;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: -apple-system, system-ui, sans-serif;
+            background-color: var(--bg-color); color: var(--text-main);
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+            padding: env(safe-area-inset-top) 16px 20px 16px;
+        }
+
+        .app-container { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 16px; }
+        
+        .header { text-align: center; margin: 10px 0; }
+        .app-title { font-size: 20px; font-weight: 700; }
+        
+        .direction-toggle {
+            background: var(--accent-blue); border: none; color: white;
+            padding: 14px; border-radius: 12px; width: 100%; font-size: 18px;
+            font-weight: 600; cursor: pointer; display: flex; justify-content: center; gap: 12px;
+        }
+
+        .mic-section {
+            background: linear-gradient(180deg, #2d3b5e 0%, #1a1d2e 100%);
+            border: 1px solid var(--border-color); color: white; padding: 16px;
+            border-radius: 12px; width: 100%; cursor: pointer; text-align: center;
+        }
+
+        .card { background-color: var(--card-bg); border-radius: 16px; padding: 16px; position: relative; }
+        .card-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 700; }
+        
+        textarea {
+            width: 100%; background: transparent; border: none; color: white;
+            font-size: 20px; line-height: 1.5; resize: none; outline: none; min-height: 120px;
+        }
+
+        .action-bar { display: flex; gap: 12px; justify-content: flex-end; }
+        .btn { padding: 12px 28px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; }
+        .btn-clear { background-color: #333645; color: white; }
+        .btn-translate { background-color: var(--accent-red); color: white; }
+
+        .result-box { font-size: 20px; min-height: 60px; }
+        .placeholder { color: #4a4d61; }
+
+        .recording-pulse { animation: pulse 1.5s infinite; background: #4a1d2e !important; }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(217, 67, 82, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(217, 67, 82, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(217, 67, 82, 0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header">
+        <div class="app-title">🌍 閩南語 ⇄ 中文翻譯</div>
+    </div>
+
+    <button class="direction-toggle" onclick="toggleDirection()">
+        <span id="from-lang">閩南語</span> ⇄ <span id="to-lang">中文</span>
+    </button>
+
+    <button class="mic-section" id="mic-btn" onclick="toggleMic()">🎤 點擊說話</button>
+
+    <div class="card">
+        <div class="card-label" id="input-label">源語言：閩南語</div>
+        <textarea id="source-text" placeholder="請輸入文字..." oninput="document.getElementById('char-count').innerText = this.value.length"></textarea>
+        <div style="font-size:12px; color:var(--text-secondary); text-align:right;">
+            <span id="char-count">0</span> / 500
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <button class="btn btn-clear" onclick="clearAll()">清除</button>
+        <button class="btn btn-translate" onclick="doTranslate()">翻譯</button>
+    </div>
+
+    <div class="card">
+        <div class="card-label" id="output-label">翻譯結果：中文</div>
+        <div id="target-text" class="result-box placeholder">翻譯結果將顯示在此處...</div>
+    </div>
+</div>
+
+<script>
+    let isMinnanToChinese = true;
+    function toggleDirection() {
+        isMinnanToChinese = !isMinnanToChinese;
+        document.getElementById('from-lang').innerText = isMinnanToChinese ? "閩南語" : "中文";
+        document.getElementById('to-lang').innerText = isMinnanToChinese ? "中文" : "閩南語";
+        document.getElementById('input-label').innerText = isMinnanToChinese ? "源語言：閩南語" : "源語言：中文";
+        document.getElementById('output-label').innerText = isMinnanToChinese ? "翻譯結果：中文" : "翻譯結果：閩南語";
+        clearAll();
+    }
+    function clearAll() {
+        document.getElementById('source-text').value = "";
+        document.getElementById('target-text').innerText = "翻譯結果將顯示在此處...";
+        document.getElementById('target-text').classList.add('placeholder');
+    }
+    function doTranslate() {
+        const input = document.getElementById('source-text').value.trim();
+        if(!input) return;
+        const target = document.getElementById('target-text');
+        target.classList.remove('placeholder');
+        target.innerText = "翻譯中...";
+        setTimeout(() => {
+            target.innerText = isMinnanToChinese ? `「${input}」的中文翻譯。` : `「${input}」的閩南語翻譯。`;
+        }, 600);
+    }
+    function toggleMic() {
+        const btn = document.getElementById('mic-btn');
+        btn.classList.toggle('recording-pulse');
+        btn.innerText = btn.classList.contains('recording-pulse') ? "🛑 正在聆聽..." : "🎤 點擊說話";
+    }
+</script>
+</body>
+</html>
